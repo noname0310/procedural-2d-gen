@@ -149,11 +149,16 @@ export class WorldGenerator extends Component {
         }
     }
     
-    private readonly _tasks: CoroutineIterator[] = [];
+    private readonly _tasks = new Map<number, { from?: Vector2, to?: Vector2 }>();
     private _taskIsRunning = false;
 
-    private lazyUpdateChunkFromTo(from?: ReadonlyVector2, to?: ReadonlyVector2): void {
-        this._tasks.push(this.updateChunkFromTo(from?.clone(), to?.clone()));
+    private lazyUpdateChunkFromTo(playerId: number, from?: ReadonlyVector2, to?: ReadonlyVector2): void {
+        const task = this._tasks.get(playerId);
+        if (task) {
+            task.to = to?.clone();
+        } else {
+            this._tasks.set(playerId, { from: from?.clone(), to: to?.clone() });
+        }
 
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const worldGenerator = this;
@@ -161,9 +166,10 @@ export class WorldGenerator extends Component {
         if (!this._taskIsRunning) {
             this.startCoroutine((function* (): CoroutineIterator {
                 worldGenerator._taskIsRunning = true;
-                while (worldGenerator._tasks.length) {
-                    const task = worldGenerator._tasks.shift()!;
-                    yield* task;
+                while (worldGenerator._tasks.size > 0) {
+                    const task = worldGenerator._tasks.values().next().value as { from?: Vector2, to?: Vector2 };
+                    worldGenerator._tasks.delete(playerId);
+                    yield* worldGenerator.updateChunkFromTo(task.from, task.to);
                 }
                 worldGenerator._taskIsRunning = false;
             })());
@@ -180,7 +186,7 @@ export class WorldGenerator extends Component {
         const playerOldChunkPosition = this._playerChunkPositions.get(playerId) as WritableVector2|undefined;
         if (playerOldChunkPosition?.equals(playerChunkPosition)) return;
 
-        this.lazyUpdateChunkFromTo(playerOldChunkPosition, playerChunkPosition);
+        this.lazyUpdateChunkFromTo(playerId, playerOldChunkPosition, playerChunkPosition);
 
         if (playerOldChunkPosition) {
             playerOldChunkPosition.copy(playerChunkPosition);
@@ -192,7 +198,7 @@ export class WorldGenerator extends Component {
     public removePlayer(playerId: number): void {
         const playerPosition = this._playerChunkPositions.get(playerId);
         if (playerPosition) {
-            this.lazyUpdateChunkFromTo(this._chunkLoader!.getChunkIndexFromPosition(playerPosition, this._tempVector1), undefined);
+            this.lazyUpdateChunkFromTo(playerId, this._chunkLoader!.getChunkIndexFromPosition(playerPosition, this._tempVector1), undefined);
             this._playerChunkPositions.delete(playerId);
         }
     }
