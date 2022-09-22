@@ -179,9 +179,9 @@ export class WorldGenerator extends Component {
             this.startCoroutine((function* (): CoroutineIterator {
                 worldGenerator._taskIsRunning = true;
                 while (worldGenerator._tasks.size > 0) {
-                    const task = worldGenerator._tasks.values().next().value as { from?: Vector2, to?: Vector2 };
-                    worldGenerator._tasks.delete(playerId);
-                    yield* worldGenerator.updateChunkFromTo(task.from, task.to);
+                    const task = worldGenerator._tasks.entries().next().value as [number, { from?: Vector2, to?: Vector2 }];
+                    worldGenerator._tasks.delete(task[0]);
+                    yield* worldGenerator.updateChunkFromTo(task[1].from, task[1].to);
                 }
                 worldGenerator._taskIsRunning = false;
             })());
