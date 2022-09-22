@@ -2,60 +2,48 @@ import {
     AsyncImageLoader,
     Bootstrapper as BaseBootstrapper, 
     Camera,
+    Component,
+    CssSpriteRenderer,
     CssTilemapChunkRenderer,
+    GameObject,
+    PlayerGridMovementController,
+    PrefabRef,
     SceneBuilder,
-    TileAtlasItem
+    TileAtlasItem,
+    TrackCameraController
 } from "the-world-engine";
-import { Vector3 } from "three/src/Three";
+import { Vector2, Vector3 } from "three/src/Three";
 
 import { AsyncLoadWaiter } from "./script/AsyncLoadWaiter";
-import { Desert, Grassland, Mountains } from "./script/BiomePreset";
-import { Wave } from "./script/NoiseGenerator";
-import { ProceduralMapGenerator } from "./script/ProceduralMapGenerator";
+import { WorldGenerator } from "./script/WorldGenerator";
 import SampleTiles from "./texture/sample_tiles.png";
 
 export class Bootstrapper extends BaseBootstrapper {
     public run(): SceneBuilder {
         const instantiater = this.instantiater;
 
+        const worldGenerator = new PrefabRef<WorldGenerator>();
+        const player = new PrefabRef<GameObject>();
+
         return this.sceneBuilder
             .withChild(instantiater.buildGameObject("camera")
                 .withComponent(Camera, c => {
-                    c.viewSize = 25;
+                    c.viewSize = 50;
+                })
+                .withComponent(TrackCameraController, c => {
+                    c.setTrackTarget(player.ref!);
                 }))
 
-            .withChild(instantiater.buildGameObject("map", new Vector3(-25 + 0.5, -25 + 0.5, 0))
+            .withChild(instantiater.buildGameObject("map", new Vector3())
                 .withComponent(CssTilemapChunkRenderer, c => {
                     c.chunkSize = 15;
                 })
-                .withComponent(ProceduralMapGenerator, c => {
-                    c.biomes = [
-                        Desert,
-                        Grassland,
-                        Mountains
-                    ];
-
-                    c.width = 50;
-                    c.height = 50;
-                    c.scale = 1;
-
-                    c.heightWaves = [
-                        new Wave(56, 0.05, 1),
-                        new Wave(199.36, 0.1, 0.5)
-                    ];
-
-                    c.moistureWaves = [
-                        new Wave(621, 0.03, 1)
-                    ];
-
-                    c.heatWaves = [
-                        new Wave(318.6, 0.04, 1),
-                        new Wave(329.7, 0.02, 0.5)
-                    ];
+                .withComponent(WorldGenerator, c => {
+                    c;
                 })
                 .withComponent(AsyncLoadWaiter<CssTilemapChunkRenderer>, c => {
                     c.loadComponent = CssTilemapChunkRenderer;
-                    c.waitComponent = ProceduralMapGenerator;
+                    c.waitComponent = WorldGenerator;
 
                     c.load = (renderer, resolve): void => {
                         AsyncImageLoader.loadImageFromPath(SampleTiles).then(image => {
@@ -65,7 +53,32 @@ export class Bootstrapper extends BaseBootstrapper {
                             resolve();
                         });
                     };
-                }))
+                })
+                .getComponent(WorldGenerator, worldGenerator))
+
+            .withChild(instantiater.buildGameObject("test-player", new Vector3(0, 0, 1))
+                .withComponent(CssSpriteRenderer, c => {
+                    c.imageWidth = 1;
+                    c.imageHeight = 1;
+                })
+                .withComponent(PlayerGridMovementController, c => {
+                    c.gridCenter = new Vector2(0, 0);
+                    c.speed = 16;
+                })
+                .withComponent(class ChunkLoadTest extends Component {
+                    public worldGenerator: WorldGenerator|null = null;
+
+                    private readonly _tempVector2 = new Vector2();
+
+                    public update(): void {
+                        const position = this.gameObject.transform.position;
+                        const positionVector2 = this._tempVector2.set(position.x, position.y);
+                        this.worldGenerator?.updatePlayerPosition(this.instanceId, positionVector2);
+                    }
+                }, c => {
+                    c.worldGenerator = worldGenerator.ref!;
+                })
+                .getGameObject(player))
         ;
     }
 }

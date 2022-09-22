@@ -1,12 +1,13 @@
-import { Component, CssTilemapChunkRenderer } from "the-world-engine";
+import { CssTilemapChunkRenderer } from "the-world-engine";
 import { Vector2 } from "three/src/Three";
 
-import { BiomePreset } from "./BiomePreset";
+import { BiomePreset, Desert, Grassland, Mountains } from "./BiomePreset";
 import { Mulberry32 } from "./Mulberry32";
 import { NoiseGenerator, Wave } from "./NoiseGenerator";
 
 export class BiomeTempData {
     public biome: BiomePreset;
+
     public constructor(preset: BiomePreset) {
         this.biome = preset;
     }
@@ -17,50 +18,50 @@ export class BiomeTempData {
     }
 }
 
-export class ProceduralMapGenerator extends Component {
-    public override readonly requiredComponents = [CssTilemapChunkRenderer];
+export class ProceduralMapGenerator {
+    public tilemap: CssTilemapChunkRenderer;
 
-    public tilemap: CssTilemapChunkRenderer | null = null;
-
-    public biomes: BiomePreset[] = [];
-
-    public width = 0;
-    public height = 0;
+    public biomes: BiomePreset[] = [
+        Desert,
+        Grassland,
+        Mountains
+    ];
+    
     public scale = 1.0;
-    public offset = new Vector2(0, 0);
 
-    public heightWaves: Wave[] = [];
-    public heightMap: number[][] = [];
+    public heightWaves: Wave[] = [
+        new Wave(56, 0.05, 1),
+        new Wave(199.36, 0.1, 0.5)
+    ];
 
-    public moistureWaves: Wave[] = [];
-    public moistureMap: number[][] = [];
+    public moistureWaves: Wave[] = [
+        new Wave(621, 0.03, 1)
+    ];
 
-    public heatWaves: Wave[] = [];
-    public heatMap: number[][] = [];
+    public heatWaves: Wave[] = [
+        new Wave(318.6, 0.04, 1),
+        new Wave(329.7, 0.02, 0.5)
+    ];
 
     private readonly _mulberry = new Mulberry32(0);
 
-    public awake(): void {
-        this.tilemap = this.gameObject.getComponent(CssTilemapChunkRenderer)!;
+    public constructor(renderer: CssTilemapChunkRenderer) {
+        this.tilemap = renderer;
     }
 
-    public start(): void {
-        this.generateMap();
-    }
+    public generateMap(width: number, height: number, offset: Vector2): void {
+        const heightMap = NoiseGenerator.generate(width, height, this.scale, this.heightWaves, offset);
+        const moistureMap = NoiseGenerator.generate(width, height, this.scale, this.moistureWaves, offset);
+        const heatMap = NoiseGenerator.generate(width, height, this.scale, this.heatWaves, offset);
 
-    private generateMap(): void {
-        this.heightMap = NoiseGenerator.generate(this.width, this.height, this.scale, this.heightWaves, this.offset);
-        this.moistureMap = NoiseGenerator.generate(this.width, this.height, this.scale, this.moistureWaves, this.offset);
-        this.heatMap = NoiseGenerator.generate(this.width, this.height, this.scale, this.heatWaves, this.offset);
-
-        for (let x = 0; x < this.width; x++) {
-            for (let y = 0; y < this.height; y++) {
-                const height = this.heightMap[x][y];
-                const moisture = this.moistureMap[x][y];
-                const heat = this.heatMap[x][y];
+        for (let x = 0; x < width; x++) {
+            for (let y = 0; y < height; y++) {
+                const height = heightMap[x][y];
+                const moisture = moistureMap[x][y];
+                const heat = heatMap[x][y];
 
                 const tile = this.getBiome(height, moisture, heat).getTileSprite(this._mulberry);
-                this.tilemap!.drawTile(x, y, tile.i, tile.a);
+                this.tilemap!.drawTile(x + offset.x, y + offset.y, tile.i, tile.a);
             }
         }
     }
