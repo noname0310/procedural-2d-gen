@@ -11,7 +11,8 @@ export class WorldGenerator extends Component {
     private _chunkSize = 15;
     private _playerViewDistance = 3;
 
-    private _circlePoints: ReadonlyVector2[]|null = null;
+    private _loadCirclePoints: ReadonlyVector2[]|null = null;
+    private _unloadCirclePoints: ReadonlyVector2[]|null = null;
     private readonly _playerChunkPositions = new Map<number, Vector2>();
     private readonly _loadedChunks = new Map<`${number}_${number}`, number>();
 
@@ -19,7 +20,8 @@ export class WorldGenerator extends Component {
         const renderer = this.gameObject.getComponent(CssTilemapChunkRenderer)!;
         this._chunkLoader = new ChunkLoader(renderer, this._chunkSize);
 
-        this._circlePoints = this.computeCirclePoints(this._playerViewDistance);
+        this._loadCirclePoints = this.computeCirclePoints(this._playerViewDistance);
+        this._unloadCirclePoints = this._loadCirclePoints.slice().reverse();
     }
 
     private computeCirclePoints(radius: number): ReadonlyVector2[] {
@@ -81,6 +83,15 @@ export class WorldGenerator extends Component {
             }
         }
 
+        // Sort by distance
+        result.sort((a, b) => {
+            const aDistance = a.length();
+            const bDistance = b.length();
+            if (aDistance < bDistance) return -1;
+            if (aDistance > bDistance) return 1;
+            return 0;
+        });
+
         return result;
     }
 
@@ -89,14 +100,15 @@ export class WorldGenerator extends Component {
     private *updateChunkFromTo(from?: ReadonlyVector2, to?: ReadonlyVector2): CoroutineIterator {
         let startTime = performance.now();
 
-        const circlePoints = this._circlePoints!;
+        const loadCirclePoints = this._loadCirclePoints!;
+        const unloadCirclePoints = this._unloadCirclePoints!;
 
         const unloadChunks = new Set<`${number}_${number}`>();
         const loadChunks = new Set<`${number}_${number}`>();
         
         if (from) {
-            for (let i = 0; i < circlePoints.length; i++) {
-                const point = circlePoints[i];
+            for (let i = 0; i < unloadCirclePoints.length; i++) {
+                const point = unloadCirclePoints[i];
                 const chunkKey = (point.x + from.x) + "_" + (point.y + from.y) as `${number}_${number}`;
                 const loadedChunk = this._loadedChunks.get(chunkKey);
                 if (loadedChunk) {
@@ -111,8 +123,8 @@ export class WorldGenerator extends Component {
         }
 
         if (to) {
-            for (let i = 0; i < circlePoints.length; i++) {
-                const point = circlePoints[i];
+            for (let i = 0; i < loadCirclePoints.length; i++) {
+                const point = loadCirclePoints[i];
                 const chunkKey = (point.x + to.x) + "_" + (point.y + to.y) as `${number}_${number}`;
                 const loadedChunk = this._loadedChunks.get(chunkKey);
                 if (loadedChunk) {
