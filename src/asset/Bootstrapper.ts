@@ -9,7 +9,7 @@ import {
 import { Vector3 } from "three/src/Three";
 
 import { AsyncLoadWaiter } from "./script/AsyncLoadWaiter";
-import { Desert, Forest, Grassland, Jungle, Mountains, Ocean, Tundra } from "./script/BiomePreset";
+import { Desert, Grassland, Mountains } from "./script/BiomePreset";
 import { Wave } from "./script/NoiseGenerator";
 import { ProceduralMapGenerator } from "./script/ProceduralMapGenerator";
 import SampleTiles from "./texture/sample_tiles.png";
@@ -21,26 +21,22 @@ export class Bootstrapper extends BaseBootstrapper {
         return this.sceneBuilder
             .withChild(instantiater.buildGameObject("camera")
                 .withComponent(Camera, c => {
-                    c.viewSize = 50;
+                    c.viewSize = 25;
                 }))
 
-            .withChild(instantiater.buildGameObject("map", new Vector3(-50 + 0.5, -50 + 0.5, 0))
+            .withChild(instantiater.buildGameObject("map", new Vector3(-25 + 0.5, -25 + 0.5, 0))
                 .withComponent(CssTilemapChunkRenderer, c => {
                     c.chunkSize = 15;
                 })
                 .withComponent(ProceduralMapGenerator, c => {
                     c.biomes = [
-                        Tundra,
-                        Forest,
-                        Jungle,
-                        Desert, 
-                        Mountains,
-                        Ocean,
-                        Grassland
+                        Desert,
+                        Grassland,
+                        Mountains
                     ];
 
-                    c.width = 100;
-                    c.height = 100;
+                    c.width = 50;
+                    c.height = 50;
                     c.scale = 1;
 
                     c.heightWaves = [
@@ -66,8 +62,6 @@ export class Bootstrapper extends BaseBootstrapper {
                             if (!c.exists) return;
     
                             renderer.imageSources = [ new TileAtlasItem(image, 13, 9) ];
-                            renderer.drawTile(0, 0, 0, 0);
-
                             resolve();
                         });
                     };

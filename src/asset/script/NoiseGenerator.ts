@@ -35,6 +35,10 @@ export class NoiseGenerator {
         const noiseMap = new Array(width);
         for (let x = 0; x < width; x++) {
             noiseMap[x] = new Array(height);
+
+            for (let y = 0; y < height; y++) {
+                noiseMap[x][y] = 0;
+            }
         }
         // loop through each element in the noise map
         for (let x = 0; x < width; ++x) {
@@ -47,7 +51,7 @@ export class NoiseGenerator {
                 for (let i = 0; i < waves.length; ++i) {
                     const wave = waves[i];
                     // sample the perlin noise taking into consideration amplitude and frequency
-                    noiseMap[x][y] += wave.amplitude * this.perlinNoise(samplePosX * wave.frequency + wave.seed, samplePosY * wave.frequency + wave.seed);
+                    noiseMap[x][y] += wave.amplitude * (this.perlinNoise(samplePosX * wave.frequency + wave.seed, samplePosY * wave.frequency + wave.seed) + 0.5);
                     normalization += wave.amplitude;
                 }
                 // normalize the value
