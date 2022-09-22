@@ -63,7 +63,7 @@ export class Bootstrapper extends BaseBootstrapper {
                 })
                 .withComponent(PlayerGridMovementController, c => {
                     c.gridCenter = new Vector2(0, 0);
-                    c.speed = 16;
+                    c.speed = 8;
                 })
                 .withComponent(class ChunkLoadTest extends Component {
                     public worldGenerator: WorldGenerator|null = null;

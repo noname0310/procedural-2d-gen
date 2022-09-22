@@ -1,4 +1,4 @@
-import { Component, CssTilemapChunkRenderer, ReadonlyVector2, WritableVector2 } from "the-world-engine";
+import { Component, CoroutineIterator, CssTilemapChunkRenderer, ReadonlyVector2, WritableVector2 } from "the-world-engine";
 import { Vector2 } from "three/src/Three";
 
 import { ChunkLoader } from "./ChunkLoader";
@@ -12,7 +12,7 @@ export class WorldGenerator extends Component {
     private _playerViewDistance = 3;
 
     private _circlePoints: ReadonlyVector2[]|null = null;
-    private readonly _playerPositions = new Map<number, Vector2>();
+    private readonly _playerChunkPositions = new Map<number, Vector2>();
     private readonly _loadedChunks = new Map<`${number}_${number}`, number>();
 
     public awake(): void {
@@ -84,10 +84,15 @@ export class WorldGenerator extends Component {
         return result;
     }
 
-    private readonly _tempVector3 = new Vector2() as WritableVector2;
+    private readonly _tempVector2 = new Vector2() as WritableVector2;
 
-    private updateChunkFromTo(from?: ReadonlyVector2, to?: ReadonlyVector2): void {
+    private *updateChunkFromTo(from?: ReadonlyVector2, to?: ReadonlyVector2): CoroutineIterator {
+        let startTime = performance.now();
+
         const circlePoints = this._circlePoints!;
+
+        const unloadChunks = new Set<`${number}_${number}`>();
+        const loadChunks = new Set<`${number}_${number}`>();
         
         if (from) {
             for (let i = 0; i < circlePoints.length; i++) {
@@ -97,7 +102,7 @@ export class WorldGenerator extends Component {
                 if (loadedChunk) {
                     if (loadedChunk - 1 <= 0) {
                         this._loadedChunks.delete(chunkKey);
-                        this._chunkLoader!.unloadChunk(this._tempVector3.copy(point).add(from));
+                        unloadChunks.add(chunkKey);
                     } else {
                         this._loadedChunks.set(chunkKey, loadedChunk - 1);
                     }
@@ -114,39 +119,81 @@ export class WorldGenerator extends Component {
                     this._loadedChunks.set(chunkKey, loadedChunk + 1);
                 } else {
                     this._loadedChunks.set(chunkKey, 1);
-                    this._chunkLoader!.loadChunk(this._tempVector3.copy(point).add(to));
+                    if (unloadChunks.has(chunkKey)) {
+                        unloadChunks.delete(chunkKey);
+                    } else {
+                        loadChunks.add(chunkKey);
+                    }
                 }
             }
+        }
+        
+        for (const chunkKey of unloadChunks) {
+            const [x, y] = chunkKey.split("_").map(Number) as [number, number];
+            this._chunkLoader!.unloadChunk(this._tempVector2.set(x, y));
+            const currentTime = performance.now();
+            if (10 < currentTime - startTime) {
+                startTime = currentTime;
+                yield null;
+            }
+        }
+
+        for (const chunkKey of loadChunks) {
+            const [x, y] = chunkKey.split("_").map(Number) as [number, number];
+            this._chunkLoader!.loadChunk(this._tempVector2.set(x, y));
+            const currentTime = performance.now();
+            if (10 < currentTime - startTime) {
+                startTime = currentTime;
+                yield null;
+            }
+        }
+    }
+    
+    private readonly _tasks: CoroutineIterator[] = [];
+    private _taskIsRunning = false;
+
+    public lazyUpdateChunkFromTo(from?: ReadonlyVector2, to?: ReadonlyVector2): void {
+        this._tasks.push(this.updateChunkFromTo(from?.clone(), to?.clone()));
+
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
+        const worldGenerator = this;
+
+        if (!this._taskIsRunning) {
+            this.startCoroutine((function* (): CoroutineIterator {
+                worldGenerator._taskIsRunning = true;
+                while (worldGenerator._tasks.length) {
+                    const task = worldGenerator._tasks.shift()!;
+                    yield* task;
+                }
+                worldGenerator._taskIsRunning = false;
+            })());
         }
     }
 
     private readonly _tempVector1 = new Vector2();
-    private readonly _tempVector2 = new Vector2();
 
     public updatePlayerPosition(playerId: number, position: ReadonlyVector2): void {
         if(!this.enabled) return;
 
-        const playerPosition = this._playerPositions.get(playerId) as WritableVector2|undefined;
-        if (playerPosition?.equals(position)) return;
-
         const chunkLoader = this._chunkLoader!;
-        const oldCenterChunkIndex = playerPosition ? this._chunkLoader!.getChunkIndexFromPosition(playerPosition, this._tempVector1) : undefined;
-        const centerChunkIndex = chunkLoader.getChunkIndexFromPosition(position, this._tempVector2);
+        const playerChunkPosition = chunkLoader.getChunkIndexFromPosition(position, this._tempVector1);
+        const playerOldChunkPosition = this._playerChunkPositions.get(playerId) as WritableVector2|undefined;
+        if (playerOldChunkPosition?.equals(playerChunkPosition)) return;
 
-        this.updateChunkFromTo(oldCenterChunkIndex, centerChunkIndex);
+        this.lazyUpdateChunkFromTo(playerOldChunkPosition, playerChunkPosition);
 
-        if (playerPosition) {
-            playerPosition.copy(position);
+        if (playerOldChunkPosition) {
+            playerOldChunkPosition.copy(playerChunkPosition);
         } else {
-            this._playerPositions.set(playerId, position.clone());
+            this._playerChunkPositions.set(playerId, playerChunkPosition.clone());
         }   
     }
 
     public removePlayer(playerId: number): void {
-        const playerPosition = this._playerPositions.get(playerId);
+        const playerPosition = this._playerChunkPositions.get(playerId);
         if (playerPosition) {
-            this.updateChunkFromTo(this._chunkLoader!.getChunkIndexFromPosition(playerPosition, this._tempVector1), undefined);
-            this._playerPositions.delete(playerId);
+            this.lazyUpdateChunkFromTo(this._chunkLoader!.getChunkIndexFromPosition(playerPosition, this._tempVector1), undefined);
+            this._playerChunkPositions.delete(playerId);
         }
     }
 
