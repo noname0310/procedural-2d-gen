@@ -152,7 +152,7 @@ export class WorldGenerator extends Component {
     private readonly _tasks: CoroutineIterator[] = [];
     private _taskIsRunning = false;
 
-    public lazyUpdateChunkFromTo(from?: ReadonlyVector2, to?: ReadonlyVector2): void {
+    private lazyUpdateChunkFromTo(from?: ReadonlyVector2, to?: ReadonlyVector2): void {
         this._tasks.push(this.updateChunkFromTo(from?.clone(), to?.clone()));
 
         // eslint-disable-next-line @typescript-eslint/no-this-alias
