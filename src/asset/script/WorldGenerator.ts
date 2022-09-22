@@ -127,10 +127,10 @@ export class WorldGenerator extends Component {
                 }
             }
         }
-        
-        for (const chunkKey of unloadChunks) {
+
+        for (const chunkKey of loadChunks) {
             const [x, y] = chunkKey.split("_").map(Number) as [number, number];
-            this._chunkLoader!.unloadChunk(this._tempVector2.set(x, y));
+            this._chunkLoader!.loadChunk(this._tempVector2.set(x, y));
             const currentTime = performance.now();
             if (10 < currentTime - startTime) {
                 startTime = currentTime;
@@ -138,9 +138,9 @@ export class WorldGenerator extends Component {
             }
         }
 
-        for (const chunkKey of loadChunks) {
+        for (const chunkKey of unloadChunks) {
             const [x, y] = chunkKey.split("_").map(Number) as [number, number];
-            this._chunkLoader!.loadChunk(this._tempVector2.set(x, y));
+            this._chunkLoader!.unloadChunk(this._tempVector2.set(x, y));
             const currentTime = performance.now();
             if (10 < currentTime - startTime) {
                 startTime = currentTime;
