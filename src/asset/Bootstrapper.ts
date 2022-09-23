@@ -28,7 +28,7 @@ export class Bootstrapper extends BaseBootstrapper {
         return this.sceneBuilder
             .withChild(instantiater.buildGameObject("camera")
                 .withComponent(Camera, c => {
-                    c.viewSize = 15 * 10;
+                    c.viewSize = 15 * 20;
                 })
                 .withComponent(TrackCameraController, c => {
                     c.setTrackTarget(player.ref!);

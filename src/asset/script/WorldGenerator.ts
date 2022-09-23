@@ -28,7 +28,7 @@ export class WorldGenerator extends Component {
         this._chunkLoader = new ChunkLoader(renderer, this._chunkSize);
 
         this._loadCirclePoints = this.computeCirclePoints(this._playerViewDistance);
-        this._unloadChunkQueueMaxValue = this._loadCirclePoints.length * 0.5;
+        this._unloadChunkQueueMaxValue = this._loadCirclePoints.length * 3;
     }
 
     private computeCirclePoints(radius: number): ReadonlyVector2[] {
