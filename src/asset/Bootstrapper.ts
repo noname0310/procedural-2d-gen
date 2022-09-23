@@ -28,7 +28,7 @@ export class Bootstrapper extends BaseBootstrapper {
         return this.sceneBuilder
             .withChild(instantiater.buildGameObject("camera")
                 .withComponent(Camera, c => {
-                    c.viewSize = 15 * 3;
+                    c.viewSize = 15 * 10;
                 })
                 .withComponent(TrackCameraController, c => {
                     c.setTrackTarget(player.ref!);
@@ -39,7 +39,7 @@ export class Bootstrapper extends BaseBootstrapper {
                     c.chunkSize = 15;
                 })
                 .withComponent(WorldGenerator, c => {
-                    c.playerViewDistance = 2;
+                    c.playerViewDistance = 10;
                 })
                 .withComponent(AsyncLoadWaiter<CssTilemapChunkRenderer>, c => {
                     c.loadComponent = CssTilemapChunkRenderer;
