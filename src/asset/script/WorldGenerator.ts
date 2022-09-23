@@ -116,8 +116,14 @@ export class WorldGenerator extends Component {
         loadChunkQueue.clear();
         unloadChunkQueue.clear();
 
+        const unloadChunkList: `${number}_${number}`[] = [];
+
         for (const chunkKey of userChunkData.loadedChunks) {
-            unloadChunkQueue.add(chunkKey);
+            unloadChunkList.push(chunkKey);
+        }
+
+        for (let i = unloadChunkList.length - 1; 0 <= i; --i) {
+            unloadChunkQueue.add(unloadChunkList[i]);
         }
 
         if (chunkIndex) {
