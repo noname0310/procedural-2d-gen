@@ -1,9 +1,9 @@
-import { Vector2 } from "three/src/Three";
+import { ReadonlyVector2 } from "the-world-engine";
 
 export class Wave {
-    public seed: number;
-    public frequency: number;
-    public amplitude: number;
+    public readonly seed: number;
+    public readonly frequency: number;
+    public readonly amplitude: number;
 
     public constructor(seed: number, frequency: number, amplitude: number) {
         this.seed = seed;
@@ -30,7 +30,7 @@ export class NoiseGenerator {
         151
     ];
 
-    public static generate(width: number, height: number, scale: number, waves: Wave[], offset: Vector2): number[][] {
+    public static generate(width: number, height: number, scale: number, waves: Wave[], offset: ReadonlyVector2): number[][] {
         // create the noise map
         const noiseMap = new Array(width);
         for (let x = 0; x < width; x++) {

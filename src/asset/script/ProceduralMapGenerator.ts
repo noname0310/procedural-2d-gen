@@ -6,7 +6,7 @@ import { Mulberry32 } from "./Mulberry32";
 import { NoiseGenerator, Wave } from "./NoiseGenerator";
 
 export class BiomeTempData {
-    public biome: BiomePreset;
+    public readonly biome: BiomePreset;
 
     public constructor(preset: BiomePreset) {
         this.biome = preset;
