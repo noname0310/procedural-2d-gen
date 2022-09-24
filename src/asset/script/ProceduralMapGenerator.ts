@@ -1,5 +1,4 @@
-import { CssTilemapChunkRenderer } from "the-world-engine";
-import { Vector2 } from "three/src/Three";
+import { CssTilemapChunkRenderer, ReadonlyVector2 } from "the-world-engine";
 
 import { BiomePreset, Desert, Grassland, Mountains } from "./BiomePreset";
 import { Mulberry32 } from "./Mulberry32";
@@ -49,7 +48,7 @@ export class ProceduralMapGenerator {
         this.tilemap = renderer;
     }
 
-    public generateMap(width: number, height: number, offset: Vector2): void {
+    public generateMap(width: number, height: number, offset: ReadonlyVector2): void {
         const heightMap = NoiseGenerator.generate(width, height, this.scale, this.heightWaves, offset);
         const moistureMap = NoiseGenerator.generate(width, height, this.scale, this.moistureWaves, offset);
         const heatMap = NoiseGenerator.generate(width, height, this.scale, this.heatWaves, offset);

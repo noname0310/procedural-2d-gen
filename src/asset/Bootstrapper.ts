@@ -70,8 +70,16 @@ export class Bootstrapper extends BaseBootstrapper {
 
                     private readonly _tempVector2 = new Vector2();
 
+                    public start(): void {
+                        setTimeout(() => {
+                            this.worldGenerator?.updatePlayerPosition(231, new Vector2(0, 0));
+                            setTimeout(() => {
+                                this.worldGenerator?.removePlayer(231);
+                            }, 1000);
+                        }, 1000);
+                    }
+
                     public update(): void {
-                        this.worldGenerator?.updatePlayerPosition(231, new Vector2(0, 0));
                         const position = this.gameObject.transform.position;
                         const positionVector2 = this._tempVector2.set(position.x, position.y);
                         this.worldGenerator?.updatePlayerPosition(this.instanceId, positionVector2);
