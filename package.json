@@ -12,10 +12,10 @@
     "license": "MIT",
     "devDependencies": {
         "@types/html-webpack-plugin": "^3.2.6",
-        "@types/webpack-bundle-analyzer": "^4.4.2",
-        "@typescript-eslint/eslint-plugin": "^5.38.0",
-        "@typescript-eslint/parser": "^5.38.0",
-        "eslint": "^8.24.0",
+        "@types/webpack-bundle-analyzer": "^4.6.0",
+        "@typescript-eslint/eslint-plugin": "^5.39.0",
+        "@typescript-eslint/parser": "^5.39.0",
+        "eslint": "^8.25.0",
         "eslint-plugin-simple-import-sort": "^8.0.0",
         "eslint-webpack-plugin": "^3.2.0",
         "file-loader": "^6.2.0",
@@ -23,13 +23,13 @@
         "html-webpack-plugin": "^5.5.0",
         "ts-loader": "^9.3.1",
         "ts-node": "^10.9.1",
-        "typescript": "^4.8.3",
+        "typescript": "^4.8.4",
         "webpack": "^5.74.0",
         "webpack-bundle-analyzer": "^4.6.1",
         "webpack-cli": "^4.10.0",
         "webpack-dev-server": "^4.11.0"
     },
     "dependencies": {
-        "the-world-engine": "^0.4.41"
+        "the-world-engine": "^0.4.42"
     }
 }
